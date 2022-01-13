@@ -15,38 +15,37 @@ AWS Lambda to resize images from S3 bucket using node/sharp
     * Cache - Redis
 3. 초기설정 가이드
 
-### 1. Ondemand Image Resizing 도입 배경
+> ### 1. Ondemand Image Resizing 도입 배경
 
 Winder 서비스 개발 초기 이미지 컨텐츠 전송 방식은 아래와 같은 문제점이 있었고 이를 해결하고자 도입하였습니다.
 
+```text
 1. S3 버킷을 public 으로 설정하여 버킷 안의 이미지 url을 제공하여 보여주는 방식
-
-→ S3 버킷 이미지 접근에 대한 제한이 필요해보임.
+    → S3 버킷 이미지 접근에 대한 제한이 필요해보임.
 
 2. 이미지 별로 다양한 사이즈가 요구되어 각각의 이미지를 사이즈별로 S3에 저장 하는 방식.
+    → 사이즈별로 저장해놓는 방식은 새로운 사이즈가 필요할 때 유연하게 대응하기가 어려움. 저장 용량 또한 새로운 사이즈가 필요할 때 마다 기하급수적으로 증가.
+    → 서비스 환경 (모바일, 웹, 운영체제 등)에 따라 다양한 이미지 포멧을 지원하기 어려움.
 
-→ 사이즈별로 저장해놓는 방식은 새로운 사이즈가 필요할 때 유연하게 대응하기가 어려움. 저장 용량 또한 새로운 사이즈가 필요할 때 마다 기하급수적으로 증가.
+```
 
-→ 서비스 환경 (모바일, 웹, 운영체제 등)에 따라 다양한 이미지 포멧을 지원하기 어려움.
+> ### 2. Ondemand Image Resizing Infra
 
-### 2. Ondemand Image Resizing Infra
-
-참고 레퍼런스를 찾아보았을 때, 이와 같은 인프라를 구축하기 위해 AWS Cloudfront의 CDN과 Lambda edge를 같이 사용하여 캐싱과 라우팅 최적화를 할 수 있어보입니다.
+레퍼런스를 찾아보았을 때, 이와 같은 인프라를 구축하기 위해 AWS Cloudfront의 CDN과 Lambda edge를 같이 사용하여 캐싱과 라우팅 최적화를 할 수 있어보입니다.
 
 하지만 현재 개발중인 서비스가 비교적 작은 규모의 프로젝트이기에 AWS Cloudfront 대신 EC2에 Redis를 설치하여 캐싱 서버로 사용해 보았습니다.
 
 * #### Resize - AWS Lambda
   AWS lambda는 서버를 프로비저닝하거나 관리하지 않고도 코드를 실행할 수 있게 해주는 컴퓨팅 서비스입니다.
 
-이를 사용했을 시 가질 수 있는 장점은 다음과 같았습니다.
-
+이를 사용했을 시의 장점은 다음과 같았습니다.
+```markdown
 * 서버와 분리된 환경이다보니 사용하는 언어에 제약이 작다는 점.
-
--> 이미지 처리를 node/sharp, python/openCV 두 케이스중 하나로 진행하는 것을 염두에 두었습니다.
-
--> 최종적으로는 node/sharp 와 python/openCV 중 sharp가 openCV에 비해 비교적 간단히 적용이 가능하다는 점에 sharp를 채택하여 사용했습니다.
+    -> 이미지 처리를 node/sharp, python/openCV 두 케이스중 하나로 진행하는 것을 염두에 두었습니다.
+    -> 최종적으로는 node/sharp 와 python/openCV 중 sharp가 openCV에 비해 비교적 간단히 적용이 가능하다는 점에 sharp를 채택하여 사용했습니다.
 
 * AWS의 IAM 설정을 통해 S3 버킷에 접근하기 편리하다는 점.
+```
 
 * #### Cache - Redis
 
@@ -54,9 +53,7 @@ Redis는 오픈소스이며 in-memory data structure 저장을 지원합니다. 
 
 본 구현에서는 인메모리 방식의 장점을 이용하여 Image Resizing에 대한 요청값을 Key로, 이미지 버퍼를 Value로 캐싱하여 요청값을 토대로 캐싱된 값을 바로 response 할 수 있도록 서버를 구현해보았습니다.
 
-### 3. Ondemand Image Resizing Process
-
-REQ/RES 과정은 다음과 같습니다.
+> ### 3. Ondemand Image Resizing Process
 
 ```
 1. 프론트에서 Image Resizing 서버의 API 엔드포인트에 원하는 이미지, 사이즈, 확장자를 요청.
