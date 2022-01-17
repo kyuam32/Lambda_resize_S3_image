@@ -1,12 +1,12 @@
-const AWS = require('aws-sdk');
-const sharp = require('sharp');
+import AWS from 'aws-sdk';
+import sharp from 'sharp';
 
 const S3 = new AWS.S3({
   region: 'ap-northeast-2',
 });
 
-function noImage(){
-  throw new Error("Image doesn\'t exist.");
+function noImage() {
+  throw new Error("Image doesn't exist.");
 }
 
 exports.handler = async (event) => {
@@ -47,7 +47,7 @@ exports.handler = async (event) => {
       resizedImage = Body;
     }
 
-    const response = {
+    return {
       statusCode: 200,
       headers: {
         'Content-Type': `image/${params.type}`,
@@ -55,11 +55,8 @@ exports.handler = async (event) => {
       body: resizedImage.toString('base64'),
       isBase64Encoded: true,
     };
-
-    return response;
   } catch (e) {
-    console.error(e);
-    const responseErr = {
+    return {
       statusCode: 400,
       headers: {
         'Content-Type': 'application/json',
@@ -67,6 +64,5 @@ exports.handler = async (event) => {
       body: e.toJSON,
       isBase64Encoded: false,
     };
-    return (responseErr);
   }
 };
